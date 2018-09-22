@@ -13,96 +13,28 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 public class ExcelUtils {
 
-	public static XSSFSheet ExcelWSheet;
+	
 
 	private static XSSFWorkbook ExcelWBook;
 
-	private static XSSFCell Cell;
+	
 
-	private static XSSFRow Row;
-
-public static Object[][] getTableArray(String FilePath, String SheetName) throws Exception {   
-
-   String[][] tabArray = null;
-
-   try {
-
+public static void initializeExcelFile(String FilePath) throws Exception
+{
 	   FileInputStream ExcelFile = new FileInputStream(FilePath);
 
 	   // Access the required test data sheet
 
 	   ExcelWBook = new XSSFWorkbook(ExcelFile);
 
-	   ExcelWSheet = ExcelWBook.getSheet(SheetName);
+}
 
-	   int startRow = 1;
-
-	   int startCol = 0;
-
-	   int ci,cj;
-
-	   //first row is header so i have substracted one row
-	   int totalRows = getLastTestDataRowNum()-1;
-	   
-
-	   // you can write a function as well to get Column count
-
-	   int totalCols = ExcelWSheet.getRow(0).getLastCellNum();
-	   
-
-	   tabArray=new String[totalRows][totalCols];
-
-	   ci=0;
-
-	   boolean flag=false;
-	   for (int i=startRow;i<=totalRows;i++, ci++) {           	   
-
-		  cj=0;
-		  if(flag==true)
-		  {
-			  break;
-		  }
-		  
-
-		  
-		   for (int j=startCol;j<totalCols;j++, cj++){
-
-			   tabArray[ci][cj]=getCellData(i,j);
-			   if(tabArray[ci][cj].equalsIgnoreCase(""))
-			   {
-				   flag=true;
-				   break;
-			   }
-
-			   System.out.println(tabArray[ci][cj]);  
-
-				}
-
-			}
-
-		}
-
-	catch (FileNotFoundException e){
-
-		System.out.println("Could not read the Excel sheet");
-
-		e.printStackTrace();
-
-		}
-
-	catch (IOException e){
-
-		System.out.println("Could not read the Excel sheet");
-
-		e.printStackTrace();
-
-		}
-
-	return(tabArray);
-
-	}
-
-public static int getLastTestDataRowNum()
+public static XSSFSheet getWorkSheet(String sheetName)
+{
+	return ExcelWBook.getSheet(sheetName);
+}
+	
+public static int getLastTestDataRowNum(XSSFSheet ExcelWSheet)
 {
 	try {
 		int i;
@@ -122,14 +54,12 @@ public static int getLastTestDataRowNum()
 	}
 }
 
-public static String getCellData(int RowNum, int ColNum) throws Exception {
+public static String getCellData(XSSFSheet ExcelWSheet,int RowNum, int ColNum) throws Exception {
 
 	try{
 
-		Cell = ExcelWSheet.getRow(RowNum).getCell(ColNum);
+		XSSFCell Cell = ExcelWSheet.getRow(RowNum).getCell(ColNum);
 		
-		
-
 		int dataType = Cell.getCellType();
 
 		if  (dataType == 3) {
@@ -138,8 +68,6 @@ public static String getCellData(int RowNum, int ColNum) throws Exception {
 
 		}else{
 
-			//String CellData = Cell.getStringCellValue();
-
 			DataFormatter formatter = new DataFormatter();
 			String CellData = formatter.formatCellValue(Cell);	
 			return CellData;
@@ -147,15 +75,20 @@ public static String getCellData(int RowNum, int ColNum) throws Exception {
 		}
 	}
 		catch (Exception e){
-
-		System.out.println(e.getMessage());
-
 		throw (e);
-
 		}
 
 	}
 	
-
+public static void main(String[] args) throws Exception {
+	System.out.println(System.getProperty("user.dir"));
+	initializeExcelFile(System.getProperty("user.dir")+"//ApplicationForm_TextData.xlsx");
+	XSSFSheet sheet1=getWorkSheet("Application Form");
+	System.out.println(getCellData(sheet1,1, 4));
+	String a=sheet1.getRow(1).getCell(4).getStringCellValue();
+	String[] checks=a.split(";");
+	XSSFSheet sheet2=getWorkSheet(checks[0]);
+	System.out.println(getCellData(sheet2,1, 2));
+}
 
 }

@@ -2,6 +2,9 @@ package utils;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -10,8 +13,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 import org.apache.commons.io.FileUtils;
+import org.openqa.selenium.Alert;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.NoAlertPresentException;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.WebDriver;
@@ -26,14 +31,14 @@ import com.aventstack.extentreports.ExtentReports;
 import com.aventstack.extentreports.ExtentTest;
 import com.aventstack.extentreports.Status;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.text.SimpleDateFormat;
-
 
 
 public class WebDriverUtils {
 	
+	/*for (WebElement webElement : list) {
+		System.out.println(webElement.isDisplayed());
+		System.out.println("----"+webElement.getText()+"-----");
+	}*/
 	public static WebDriver driver=null;
 	public static Properties prop=new Properties();
 	public static ExtentReports extent=null;
@@ -110,6 +115,16 @@ public class WebDriverUtils {
 		}
 	}
 	
+	public static void waitUntilFrameAvailableAndSwitch(int timeOutInSeconds,String frameName) throws Exception
+	{
+		try {
+			new WebDriverWait(driver, timeOutInSeconds).until(ExpectedConditions.frameToBeAvailableAndSwitchToIt(frameName));
+		} catch (Exception e) {
+			// TODO: handle exception
+			throw e;
+		}
+	}
+	
 	public static WebElement getWebElement(String args) throws Exception
 	{
 		try {
@@ -133,6 +148,8 @@ public class WebDriverUtils {
 			case "linkText":	
 				element=driver.findElement(By.linkText(locatorValue));
 				break;
+			case "partialLinkText":
+				element=driver.findElement(By.partialLinkText(locatorValue));
 			default:
 				throw new Exception(locatorType+" not found in the locator list");
 			}
@@ -177,7 +194,29 @@ public class WebDriverUtils {
 		String dest=System.getProperty("user.dir")+"//TestResultScreenShot//Image_"+sdf.format(cal.getTime())+".png";
 		FileUtils.copyFile(fs, new File(dest));
 		System.out.println("screenshot taken");
+		test.addScreenCaptureFromPath(dest);
 		return dest;
+	}
+	
+	public static void switchToFrameNameContainsHS() throws Exception
+	{
+		driver.switchTo().defaultContent();
+		List<WebElement> list=getWebElements("xpath__//iframe");
+		Thread.sleep(5000);
+
+		for (WebElement webElement : list) {
+			
+			System.out.println(webElement.getAttribute("name")+" "+webElement.isDisplayed());
+			
+			String framename=webElement.getAttribute("name");
+			if(framename.contains("hs") && webElement.isDisplayed())
+			{
+				
+				driver.switchTo().frame(framename);
+				break;
+			}
+		}
+
 	}
 
 	public static void main(String[] args) {
@@ -221,6 +260,25 @@ public class WebDriverUtils {
 		}
 		
 		
+	}
+	
+	public static void switchToFrame(String frameName)
+	{
+		driver.switchTo().frame(frameName);
+	}
+	
+	public static Alert getAlert() 
+	{ 
+		Alert alert=null;
+	    try 
+	    { 
+	        alert=driver.switchTo().alert(); 
+	        return alert; 
+	    }   // try 
+	    catch (Exception Ex) 
+	    { 
+	        return alert; 
+	    }   // catch 
 	}
 	
 	public static void scrollIntoElementView(WebElement ele)
@@ -280,7 +338,7 @@ public class WebDriverUtils {
 	public static void waitUntilVisible(int timeoutSeconds,By locator)
 	{
 		WebDriverWait wait=new WebDriverWait(driver, timeoutSeconds);
-		wait.until(ExpectedConditions.invisibilityOfElementLocated(locator));
+		wait.until(ExpectedConditions.visibilityOfElementLocated(locator));
 		wait.withTimeout(timeoutSeconds, TimeUnit.SECONDS);
 		
 	}
